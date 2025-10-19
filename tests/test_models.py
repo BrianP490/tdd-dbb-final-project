@@ -246,10 +246,33 @@ class TestProductModel(unittest.TestCase):
         for prod in matches:
             self.assertEqual(prod.category, first_prod_target)
 
+    def test_find_by_price(self):
+        """It should find products by price"""
+        # Populate the products
+        products = ProductFactory.create_batch(10)
+        for product in products:
+            product.create()
+        first_prod_target = products[0].price
+
+        # Count the number of products with the same price
+        expected_occur = 0
+        for inst in products:
+            if inst.price == first_prod_target:
+                expected_occur += 1
+
+        matches = Product.find_by_price(first_prod_target)
+        actual_occur = matches.count()
+        self.assertEqual(actual_occur, expected_occur)
+
+        # Assert that each products name matches the expected namd
+
+        for prod in matches:
+            self.assertEqual(prod.price, first_prod_target)
+
     def test_deserialize_missing_data(self):
         """It should test deserializing a product and raising error"""
         inst = ProductFactory()
-        
+
         # Missing 'name' will cause a KeyError, which should be converted to DataValidationError
         data = {
             "name": "tool",
