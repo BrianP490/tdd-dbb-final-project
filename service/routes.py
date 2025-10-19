@@ -122,9 +122,7 @@ def read_product(product_id):
 # U P D A T E   A   P R O D U C T
 ######################################################################
 
-#
-# PLACE YOUR CODE TO UPDATE A PRODUCT HERE
-#
+
 @app.route("/products/<product_id>", methods=["PUT"])
 def update_product(product_id):
     """Update a product from the database"""

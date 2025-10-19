@@ -171,12 +171,11 @@ class TestProductRoutes(TestCase):
         test_product = self._create_products()[0]
         request = self.client.get(f"{BASE_URL}/{test_product.id}")
         self.assertEqual(request.status_code, status.HTTP_200_OK)
-        dictionary = request.get_json() # Don't use .json() because the info received is serialized
+        dictionary = request.get_json()  # Don't use .json() because the info received is serialized
         self.assertEqual(dictionary['name'], test_product.name)
 
     def test_get_product_not_found(self):
         """Tests for product not found"""
-        test_product = self._create_products()[0]
         request = self.client.get(f"{BASE_URL}/0")
         self.assertEqual(request.status_code, status.HTTP_404_NOT_FOUND)
 
@@ -195,8 +194,6 @@ class TestProductRoutes(TestCase):
         self.assertEqual(request.status_code, status.HTTP_200_OK)
         updated_product = request.get_json()
         self.assertEqual(updated_product["description"], "unknown")
-
-
 
     ######################################################################
     # Utility functions
