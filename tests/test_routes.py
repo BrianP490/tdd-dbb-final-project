@@ -195,7 +195,7 @@ class TestProductRoutes(TestCase):
         self.assertEqual(request.status_code, status.HTTP_200_OK)
         updated_product = request.get_json()
         self.assertEqual(updated_product["description"], "unknown")
-    
+
     def test_update_product_not_found(self):
         """Tests for updating a missing product"""
         new_product = ProductFactory().serialize()
@@ -256,13 +256,31 @@ class TestProductRoutes(TestCase):
                 expected += 1
         response = self.client.get(
             BASE_URL, query_string=f"category={target.name}"
-        )
+        )   # Access the enum's member name (string)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         data = response.get_json()
         self.assertEqual(len(data), expected)
         # Check the data just to be sure
         for product in data:
             self.assertEqual(product["category"], target.name)
+
+    def test_query_by_available(self):
+        """Tests Getting Available Products"""
+        products = self._create_products(10)
+        # Get a count of all available products
+        expected = 0
+        for product in products:
+            if product.available:
+                expected += 1
+        response = self.client.get(
+            BASE_URL, query_string="available=true"
+        )   # Access the enum's member name (string)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.get_json()
+        self.assertEqual(len(data), expected)
+        # Check the data just to be sure
+        for product in data:
+            self.assertEqual(product["available"], True)
 
     ######################################################################
     # Utility functions

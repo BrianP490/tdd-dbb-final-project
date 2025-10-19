@@ -105,6 +105,7 @@ def list_products():
 
     name = request.args.get("name")
     category = request.args.get("category")
+    available = request.args.get("available")
 
     if name:
         products = Product.find_by_name(name)
@@ -112,6 +113,9 @@ def list_products():
         # Create enum from string
         category_value = getattr(Category, category.upper())
         products = Product.find_by_category(category_value)
+    elif available:
+        val = available.lower() in ["true", "yes", "1"]
+        products = Product.find_by_availability(val)
     else:
         products = Product.all()
 
@@ -125,9 +129,7 @@ def list_products():
 # R E A D   A   P R O D U C T
 ######################################################################
 
-#
-# PLACE YOUR CODE HERE TO READ A PRODUCT
-#
+
 @app.route("/products/<product_id>", methods=["GET"])
 def read_product(product_id):
     """Reads a product from the database"""
