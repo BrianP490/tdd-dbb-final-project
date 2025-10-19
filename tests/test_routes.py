@@ -166,6 +166,37 @@ class TestProductRoutes(TestCase):
     #
     # ADD YOUR TEST CASES HERE
     #
+    def test_get_product(self):
+        """It should get a product"""
+        test_product = self._create_products()[0]
+        request = self.client.get(f"{BASE_URL}/{test_product.id}")
+        self.assertEqual(request.status_code, status.HTTP_200_OK)
+        dictionary = request.get_json() # Don't use .json() because the info received is serialized
+        self.assertEqual(dictionary['name'], test_product.name)
+
+    def test_get_product_not_found(self):
+        """Tests for product not found"""
+        test_product = self._create_products()[0]
+        request = self.client.get(f"{BASE_URL}/0")
+        self.assertEqual(request.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_update_product(self):
+        """It should update a product correctly"""
+        inst = ProductFactory()
+        request = self.client.post(BASE_URL, json=inst.serialize())
+        self.assertEqual(request.status_code, status.HTTP_201_CREATED)
+        new_product = request.get_json()
+
+        # Update product based on ID
+        new_product["description"] = "unknown"
+        request = self.client.put(f"{BASE_URL}/{new_product['id']}", json=new_product)
+
+        # Verify Updated Product info
+        self.assertEqual(request.status_code, status.HTTP_200_OK)
+        updated_product = request.get_json()
+        self.assertEqual(updated_product["description"], "unknown")
+
+
 
     ######################################################################
     # Utility functions

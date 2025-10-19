@@ -27,7 +27,7 @@ import os
 import logging
 import unittest
 from decimal import Decimal
-from service.models import Product, Category, db
+from service.models import Product, Category, db, DataValidationError
 from service import app
 from tests.factories import ProductFactory
 
@@ -104,3 +104,159 @@ class TestProductModel(unittest.TestCase):
     #
     # ADD YOUR TEST CASES HERE
     #
+    def test_read_a_product(self):
+        """Tests reading a product"""
+        # Create a product instance
+        inst = ProductFactory()
+        inst.id = None
+        inst.create()   # The instance will get a new ID
+
+        self.assertIsNot(inst.id, None)
+
+        found_product = Product.find(inst.id)
+        # Assert the properties of the found product match with the original instance
+        self.assertEqual(found_product.name, inst.name)
+        self.assertEqual(found_product.description, inst.description)
+        self.assertEqual(found_product.price, inst.price)
+        self.assertEqual(found_product.available, inst.available)
+        self.assertEqual(found_product.category, inst.category)
+
+    def test_update_a_product_error(self):
+        """It should test updating a product and raising error"""
+        inst = ProductFactory()
+        inst.id = None
+        inst.create()
+
+        inst.id = None
+        with self.assertRaises(DataValidationError):
+            inst.update()
+
+    def test_update_a_product(self):
+        """It should test updating a product"""
+        inst = ProductFactory()
+        inst.id = None
+        inst.create()
+        first_id = inst.id  # save new ID
+
+        # Updating the description
+        inst.description = "This is just a test"
+        inst.update()
+        self.assertEqual(inst.id, first_id)
+        self.assertEqual(inst.description, "This is just a test")
+
+        all_products = Product.all()
+        # Check fetched data
+        assert len(all_products) == 1
+        self.assertEqual(all_products[0].id, first_id)
+        self.assertEqual(all_products[0].description, "This is just a test")
+
+    def test_delete_a_product(self):
+        """It should delete a Product"""
+        inst = ProductFactory()
+        inst.create()
+        self.assertEqual(len(Product.all()), 1)
+        # delete the product and make sure it isn't in the database
+        inst.delete()
+        self.assertEqual(len(Product.all()), 0)
+
+    def test_list_all_products(self):
+        """It should list all products and verify consistency"""
+        # Verify that the products list is empty
+        products = Product.all()
+        self.assertEqual(len(products), 0)
+
+        for _ in range(5):
+            inst = ProductFactory()
+            inst.create()
+        # Verify that 5 products remain
+        products = Product.all()
+        self.assertEqual(len(products), 5)
+
+    def test_find_product_by_name(self):
+        """It should find a product by name"""
+        # Verify that the products list is empty
+        products = Product.all()
+        self.assertEqual(len(products), 0)
+
+        for _ in range(5):
+            inst = ProductFactory()
+            inst.create()
+
+        products = Product.all()
+        first_prod_name = products[0].name
+
+        # Count the number of products with the same name
+        expected_occur = 0
+        for inst in products:
+            if inst.name == first_prod_name:
+                expected_occur += 1
+
+        products_matching_name = Product.find_by_name(first_prod_name)
+        actual_occur = products_matching_name.count()
+        self.assertEqual(actual_occur, expected_occur)
+
+        # Assert that each products name matches the expected namd
+
+        for prod in products_matching_name:
+            self.assertEqual(prod.name, first_prod_name)
+
+    def test_find_by_availability(self):
+        """It should find products by availability"""
+        # Populate the products
+        products = ProductFactory.create_batch(10)
+        for product in products:
+            product.create()
+        first_prod_target = products[0].available
+
+        # Count the number of products with the same availability
+        expected_occur = 0
+        for inst in products:
+            if inst.available == first_prod_target:
+                expected_occur += 1
+
+        matches = Product.find_by_availability(first_prod_target)
+        actual_occur = matches.count()
+        self.assertEqual(actual_occur, expected_occur)
+
+        # Assert that each products name matches the expected namd
+
+        for prod in matches:
+            self.assertEqual(prod.available, first_prod_target)
+
+    def test_find_by_category(self):
+        """It should find products by category"""
+        # Populate the products
+        products = ProductFactory.create_batch(10)
+        for product in products:
+            product.create()
+        first_prod_target = products[0].category
+
+        # Count the number of products with the same category
+        expected_occur = 0
+        for inst in products:
+            if inst.category == first_prod_target:
+                expected_occur += 1
+
+        matches = Product.find_by_category(first_prod_target)
+        actual_occur = matches.count()
+        self.assertEqual(actual_occur, expected_occur)
+
+        # Assert that each products name matches the expected namd
+
+        for prod in matches:
+            self.assertEqual(prod.category, first_prod_target)
+
+    def test_deserialize_missing_data(self):
+        """It should test deserializing a product and raising error"""
+        inst = ProductFactory()
+        
+        # Missing 'name' will cause a KeyError, which should be converted to DataValidationError
+        data = {
+            "name": "tool",
+            "description": "my product",
+            "price": ["10.50"],
+            "available": True,
+            "category": "CLOTHES"
+        }
+        with self.assertRaises(ValueError):
+            inst.deserialize(data)
